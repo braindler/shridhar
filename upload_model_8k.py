@@ -18,7 +18,7 @@ def upload_model():
     # Настройки репозитория
     repo_id = "nativemind/shridhar_8k"
     model_path = "./braindler_finetuned_8k"
-    lora_path = "./braindler_finetuned_8k_lora"
+    lora_path = "./braindler_finetuned_8k"  # LoRA адаптеры в той же папке
     
     print(f"Создаю репозиторий: {repo_id}")
     
