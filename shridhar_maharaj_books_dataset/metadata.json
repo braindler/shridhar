@@ -1,0 +1,8 @@
+{
+  "dataset_name": "shridhar_maharaj_books",
+  "description": "Коллекция духовных книг Шрилы Шридхара Махараджа на русском языке",
+  "language": "ru",
+  "total_books": 15,
+  "total_text_length": 2200552,
+  "total_words": 313003
+}

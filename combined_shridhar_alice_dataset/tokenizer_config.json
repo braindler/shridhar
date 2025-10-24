@@ -1,0 +1,16 @@
+{
+  "vocab_size": 50000,
+  "model_max_length": 8192,
+  "special_tokens": [
+    "<|spiritual|>",
+    "<|dialogue|>",
+    "<|script|>",
+    "<|end|>",
+    "<|pad|>",
+    "<|unk|>"
+  ],
+  "language": "ru",
+  "tokenizer_type": "BPE",
+  "lowercase": false,
+  "strip_accents": false
+}

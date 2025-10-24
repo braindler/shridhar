@@ -1,0 +1,44 @@
+{
+  "model_config": {
+    "vocab_size": 50000,
+    "n_positions": 8192,
+    "n_embd": 768,
+    "n_layer": 12,
+    "n_head": 12,
+    "attn_pdrop": 0.1,
+    "embd_pdrop": 0.1,
+    "resid_pdrop": 0.1,
+    "activation_function": "gelu_new"
+  },
+  "training_args": {
+    "per_device_train_batch_size": 1,
+    "per_device_eval_batch_size": 1,
+    "gradient_accumulation_steps": 16,
+    "learning_rate": 0.0001,
+    "num_train_epochs": 3,
+    "max_steps": 10000,
+    "warmup_steps": 500,
+    "logging_steps": 100,
+    "save_steps": 500,
+    "eval_steps": 500,
+    "evaluation_strategy": "steps",
+    "save_strategy": "steps",
+    "load_best_model_at_end": true,
+    "metric_for_best_model": "eval_loss",
+    "greater_is_better": false,
+    "fp16": true,
+    "gradient_checkpointing": true,
+    "dataloader_pin_memory": true,
+    "dataloader_num_workers": 4,
+    "remove_unused_columns": false,
+    "report_to": "tensorboard",
+    "run_name": "shridhar_8k_training"
+  },
+  "optimization": {
+    "use_mps": true,
+    "mixed_precision": "fp16",
+    "gradient_checkpointing": true,
+    "flash_attention": true,
+    "memory_efficient_attention": true
+  }
+}
