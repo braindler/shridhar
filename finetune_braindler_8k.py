@@ -39,11 +39,12 @@ class BraindlerFinetuner:
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
         
-        # Конфигурация для 8K контекста
+        # Конфигурация для оптимизации памяти
         model_kwargs = {
             "torch_dtype": torch.float16,
             "device_map": "auto",
-            "trust_remote_code": True
+            "trust_remote_code": True,
+            "low_cpu_mem_usage": True
         }
         
         # Загружаем модель
@@ -51,6 +52,10 @@ class BraindlerFinetuner:
             self.model_name,
             **model_kwargs
         )
+        
+        # Включаем gradient checkpointing для экономии памяти
+        self.model.gradient_checkpointing_enable()
+        print("✅ Gradient checkpointing включен для экономии памяти")
         
         # Расширяем контекст до 8K
         self.extend_context_length()
@@ -79,9 +84,8 @@ class BraindlerFinetuner:
         
         # Список датасетов для загрузки
         dataset_configs = [
-            "nativemind/alpaca_data",
-            "nativemind/mozgach_alice_gift_sql_dataset", 
-            "nativemind/mozgach_alpaca_gift",
+            "nativemind/mozgach_alice_gift_sql_data",
+            "nativemind/mozgach_alpaca_gift_data", 
             "nativemind/shridhar_maharaj_books"
         ]
         
@@ -165,10 +169,11 @@ class BraindlerFinetuner:
         lora_config = LoraConfig(
             task_type=TaskType.CAUSAL_LM,
             inference_mode=False,
-            r=16,
-            lora_alpha=32,
-            lora_dropout=0.1,
-            target_modules=["c_attn", "c_proj", "c_fc", "c_proj"]
+            r=4,  # Минимальный rank для экономии памяти
+            lora_alpha=8,  # Минимальный alpha
+            lora_dropout=0.05,  # Уменьшаем dropout
+            target_modules=["c_attn", "c_proj"],  # Только основные модули
+            bias="none"  # Отключаем bias
         )
         
         self.model = get_peft_model(self.model, lora_config)
@@ -218,20 +223,20 @@ class BraindlerFinetuner:
         print(f"📈 Train: {len(train_dataset)} записей")
         print(f"📈 Validation: {len(eval_dataset)} записей")
         
-        # Настройки обучения
+        # Настройки обучения с максимальной оптимизацией памяти
         training_args = TrainingArguments(
             output_dir="./braindler_finetuned_8k",
             overwrite_output_dir=True,
-            num_train_epochs=3,
-            per_device_train_batch_size=1,
-            per_device_eval_batch_size=1,
-            gradient_accumulation_steps=8,
-            warmup_steps=100,
-            learning_rate=5e-5,
-            fp16=True,
-            logging_steps=10,
-            eval_steps=500,
-            save_steps=1000,
+            num_train_epochs=1,  # Минимум эпох
+            per_device_train_batch_size=1,  # Минимальный batch size
+            per_device_eval_batch_size=1,  # Минимальный batch size
+            gradient_accumulation_steps=1,  # Минимальное накопление
+            warmup_steps=10,  # Минимальный warmup
+            learning_rate=1e-5,  # Очень низкий learning rate
+            fp16=False,  # Отключаем fp16 для стабильности
+            logging_steps=1,
+            eval_steps=50,
+            save_steps=100,
             eval_strategy="steps",
             save_strategy="steps",
             load_best_model_at_end=True,
@@ -239,7 +244,12 @@ class BraindlerFinetuner:
             greater_is_better=False,
             report_to="none",
             run_name="braindler_8k_finetune",
-            remove_unused_columns=False
+            remove_unused_columns=False,
+            dataloader_pin_memory=False,
+            gradient_checkpointing=True,  # Включаем gradient checkpointing
+            dataloader_num_workers=0,  # Отключаем многопоточность
+            max_grad_norm=1.0,  # Ограничиваем градиенты
+            save_total_limit=1  # Сохраняем только последнюю модель
         )
         
         # Data collator
@@ -265,7 +275,7 @@ class BraindlerFinetuner:
         self.tokenizer.save_pretrained("./braindler_finetuned_8k")
         
         # Сохраняем LoRA адаптеры
-        self.model.save_pretrained("./braindler_finetuned_8k_lora")
+        self.model.save_pretrained("./braindler_finetuned_2k_lora")
         
         print("✅ Обучение завершено!")
         
